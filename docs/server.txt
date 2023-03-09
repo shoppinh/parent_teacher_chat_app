@@ -1,0 +1,66 @@
+upstream api_umenu_dev {
+        server 127.0.0.1:3000;
+        keepalive 64;
+}
+server {
+        server_name umenu-api-d-cl.niteco.dev;
+        location / {
+                proxy_pass http://api_umenu_dev;
+                proxy_http_version 1.1;
+                proxy_set_header X-Forwarded-Host $host;
+                proxy_set_header X-Forwarded-Server $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+                proxy_set_header Host $http_host;
+                proxy_set_header Upgrade $http_upgrade;
+                proxy_set_header Connection "Upgrade";
+                proxy_pass_request_headers on;
+        }
+
+
+        listen 443 ssl;
+        ssl_password_file /etc/ssl/certs/niteco/global.pass;
+        ssl_certificate /etc/ssl/certs/niteco/niteco.se.pem;
+        ssl_certificate_key /etc/ssl/certs/niteco/niteco.se.key;
+}
+
+server {
+        if ($host = umenu-api-d-cl.niteco.dev) {
+                return 301 https://$host$request_uri;
+        }
+
+        server_name umenu-api-d-cl.niteco.dev;
+        listen 80;
+        return 404;
+
+}
+
+
+=====================================
+
+server {
+        server_name umenu-d-cl.niteco.dev;
+        root /var/www/UMenuWeb/build;
+        index index.html index.htm index.nginx-debian.html;
+
+        location / {
+               try_files $uri /index.html =404;
+        }
+
+        location  ~* \.(html|js|css|jpg|jpeg|png|gif|svg|gz|tgz|bz2|tbz|mp3|ogg|swf|pdf|ico|zip|rar|iso|doc|xls|exe|ppt|txt|>
+            expires 1h;
+            log_not_found  off;
+        }
+
+        listen 443 ssl;
+        ssl_password_file /etc/ssl/certs/niteco/global.pass;
+        ssl_certificate /etc/ssl/certs/niteco/niteco.se.pem;
+        ssl_certificate_key /etc/ssl/certs/niteco/niteco.se.key;
+}
+
+
+============
+mkdir azagent;cd azagent;curl -fkSL -o vstsagent.tar.gz https://vstsagentpackage.azureedge.net/agent/2.195.2/vsts-agent-linux-x64-2.195.2.tar.gz;tar -zxvf vstsagent.tar.gz; if [ -x "$(command -v systemctl)" ]; then ./config.sh --environment --environmentname "UMenuDev" --acceptteeeula --agent $HOSTNAME --url https://dev.azure.com/heineken/ --work work --projectname 'Umenu - Tradigital' --auth PAT --token vb7x5jaibq5tdmlylqs3jlqbawsyvprko2secqd6cqtpe4ayu25a --runasservice; sudo ./svc.sh install; sudo ./svc.sh start; else ./config.sh --environment --environmentname "UMenuDev" --acceptteeeula --agent $HOSTNAME --url https://dev.azure.com/heineken/ --work work --projectname 'Umenu - Tradigital' --auth PAT --token vb7x5jaibq5tdmlylqs3jlqbawsyvprko2secqd6cqtpe4ayu25a; ./run.sh; fi
+
+mkdir azagentweb;cd azagentweb;curl -fkSL -o vstsagent.tar.gz https://vstsagentpackage.azureedge.net/agent/2.195.2/vsts-agent-linux-x64-2.195.2.tar.gz;tar -zxvf vstsagent.tar.gz; if [ -x "$(command -v systemctl)" ]; then ./config.sh --environment --environmentname "UMenuDevFE" --acceptteeeula --agent $HOSTNAME --url https://dev.azure.com/heineken/ --work work --projectname 'Umenu - Tradigital - Web' --auth PAT --token ipnbowdocezu423up2enxbsk42wwbwz4zprwvmj4o6t6usbtemca --runasservice; sudo ./svc.sh install; sudo ./svc.sh start; else ./config.sh --environment --environmentname "UMenuDevFE" --acceptteeeula --agent $HOSTNAME --url https://dev.azure.com/heineken/ --work work --projectname 'Umenu - Tradigital - Web' --auth PAT --token ipnbowdocezu423up2enxbsk42wwbwz4zprwvmj4o6t6usbtemca; ./run.sh; fi

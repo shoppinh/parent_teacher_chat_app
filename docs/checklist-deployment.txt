@@ -1,0 +1,172 @@
+-----------------------------------------------------------------------------------------
+PREPARE:
+-----------------------------------------------------------------------------------------
+    - Webserver: Nginx (static url)
+    - NodeJS:
+        + Install nvm (node version manager)
+        + Install node 14 lts
+    - Setup host config file
+    - Check and Test Nginx config (nginx.conf):
+        + Check forwarding client IP
+        + Max File Size Settings
+        + Max request
+        + Max upload
+    - Domain and SSL
+        + For QA environment, point QA domains to IP 20.212.53.4 and install let's encrypt ssl by using certbot
+        + For ACC environment, point ACC domains to IP 20.212.53.4 and install let's encrypt ssl by using certbot
+        + For PROD environment, point PROD domains to IP 20.212.216.62, request and upload the certificate (*.pfx file) to Application Gateway (AG), create rules to forward requests from AG to PROD VM
+    - Data migration: (Data, Image and resize Images)
+        . Download new data from T-System API and put to src/db/migration/prod (2 hours)
+        . Edit the code if needed  (0.5 - 1 hours)
+        . Copy json file: (0.5 hours)
+            — SCP —
+            scp src/db/migration/production/Json.zip admin-heineken@20.212.53.4:/var/www/UMenuBE/src/db/migration/prod/
+        . Run: (1-2 hours)
+
+    - Database to import
+        + Install pgAdmin and connect to Azure Database.
+        + Create and restore database.
+
+        — RESTORE DB —
+        pg_restore -h localhost -p 5432 -U postgres -d umenus -v "/home/umenus.backup"
+
+    - Copy existed Images:
+        + Install WinSCP and connect to VM.
+        + Upload files to VM.
+
+        — SCP —
+        scp src/public/images.zip admin-heineken@20.212.53.4:/var/www/UMenuBE/public/
+
+-----------------------------------------------------------------------------------------
+DEPLOYMENT:
+-----------------------------------------------------------------------------------------
+PROD:
+    API:
+    ----
+    - Branch: prod
+    - Auto build: NO
+    - Manual build: YES
+    - Migration T-System Data: npm run console [action] [env]
+        #Outlet
+        npm run console migration-outlets production
+        #Menu and Section
+        npm run console migration-menus-and-sections production
+        #Product
+        npm run console migration-products production
+        #Product Images
+        npm run console migration-images-product production
+        #Other Images
+        npm run console migration-images production
+
+    - Migration Images
+        . Migration image file
+        . Update image path in db
+
+    - Deploy Command line:
+        0. Navigate to `/var/www/UMenuBackend/` folder
+        1. git pull origin prod (maybe we can use git tag???)
+        2. npm run build
+        3.1 First time: pm2 start dist/main.js -i max --name UMenuBackend
+        3.2 After time: pm2 reload UMenuBackend
+        4. Migration SQL and Data if needed
+
+    - Verify: TESTER
+    - Rollback:
+        0. Rollback Database: npm run migration:revert
+        1. Checkout code to git previous version
+        2. pm2 reload UMenuPROD
+        3. Revert prod branch to previous version
+
+    WEB:
+    ----
+    - Branch: prod (maybe we can use git tag???)
+    - Auto build: NO
+    - Manual build: YES
+    - Deploy Command line:
+        0. Navigate to `/var/www/UMenuFrontend/` folder
+        1. Pull the latest source code in `prod` branch
+        2. In terminal: npm install && npm run build:prod
+        3. After build finish, remove all old built files: `rm -r /var/www/UMenuFrontendBuild/*`
+        4. Copy all built files to `UMenuFrontendBuild` folder: `cp -a /var/www/UMenuFrontend/build/. /var/www/UMenuFrontendBuild/`
+        5. Restart nginx if needed: `sudo systemctl restart nginx`
+
+    - Verify: TESTER
+    - Rollback:
+        1. Checkout git previous version
+        2. Revert prod branch to previous version
+
+QA:
+    API:
+    ----
+    - Branch: niteco/develop
+    - Azure Auto Build: YES
+    - Manual build: YES
+    - Deploy Command line:
+        0. Navigate to `/var/www/UMenuBackend/` folder
+        1. git pull origin niteco/develop
+        2. npm install && npm run build
+        3.1 pm2 start dist/main.js -i 1 --name UMenuBackendQA
+        3.2 pm2 restart UMenuBackendQA
+
+    WEB:
+    ----
+    - Check nginx config
+    - Auto build: YES
+    - Dev build: YES
+    - Deploy Command line:
+        0. Navigate to `/var/www/UMenuFrontend/` folder
+        1. Pull the latest source code in `niteco/develop` branch
+        2. In terminal: npm install && npm run build:dev
+        3. After build finish, remove all old built files: `rm -r /var/www/UMenuFrontendQABuild/*`
+        4. Copy all built files to `UMenuFrontendBuild` folder: `cp -a /var/www/UMenuFrontend/build/. /var/www/UMenuFrontendQABuild/`
+        5. Restart nginx if needed: `sudo systemctl restart nginx`
+
+ACC:
+    API:
+    ----
+    - Branch: acc
+    - Azure Auto build: YES
+    - Manual build: YES
+    - Migration T-System Data
+    - Migration Images
+    - Migration SQL
+    - Deploy Command line:
+        0. Navigate to `/var/www/ACC-UMenuBackend/` folder
+        1. git pull origin acc
+        2. npm install && npm run build
+        3.1 pm2 start dist/main.js -i 1 --name UMenuBackendACC
+        3.2 pm2 restart UMenuBackendACC
+
+    WEB:
+    ----
+    - Check nginx config
+    - Auto build: YES
+    - Dev build: YES
+    - Deploy Command line:
+        0. Navigate to `/var/www/ACC-UMenuFrontend/` folder
+        1. Pull the latest source code in `acc` branch
+        2. In terminal: npm install && npm run build:dev
+        3. After build finish, remove all old built files: `rm -r /var/www/UMenuFrontendACCBuild/*`
+        4. Copy all built files to `UMenuFrontendBuild` folder: `cp -a /var/www/UMenuFrontend/build/. /var/www/UMenuFrontendACCBuild/`
+        5. Restart nginx if needed: `sudo systemctl restart nginx`
+
+
+-----------------------------------------------------------------------------------------
+Development
+-----------------------------------------------------------------------------------------
+New issue:
+    1. Checkout code from prod branch => PDH-[TicketNumber] or feature/PDH-[TicketNumber]
+    2. Push to the remote when it is done
+    3. Merge to develop to QA verify
+    4. Merge to acc to customer verify
+    5. Merge to prod to Deployment
+    6. Delete this branch
+
+Migration Database (For QA, ACC, PROD environments)
+    If any changes regarding structure of database, please flow these steps:
+    0. Remote to VM, navigate to backend folder and pull the latest source code.
+    1. Build project: `npm install and npm run build`
+    2. Generate migration files by running command: `npm run typeorm migration:generate -- -n [migration_name] -o`
+    3. Run the migration files to update structure database: `npm run typeorm migration:run`
+    4. If you want to revert the changes, run command: `npm run typeorm migration:revert`
+    5. Restart: `pm2 restart [process_name]`
