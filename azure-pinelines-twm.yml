@@ -1,0 +1,32 @@
+trigger:
+  - two-ways-message
+
+pool:
+  vmImage: ubuntu-latest
+
+jobs:
+  - deployment: VMDeploy
+    displayName: Deploy to VM
+    environment:
+      name: NitecoDevServer
+      resourceType: VirtualMachine
+      tags: NitecoDevApi # only deploy to virtual machines with this tag
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+            - script: |
+                cd /var/www/UMenuBackend
+                ls -la
+                git checkout package-lock.json yarn.lock
+                git pull https://$(API_GIT_TOKEN)@dev.azure.com/heineken/Umenu%20-%20Tradigital/_git/Umenu%20-%20Tradigital two-ways-message
+              displayName: Pull the code in VM
+
+            - script: |
+                cd /var/www/UMenuBackend
+                npm install
+                npm run build
+                npm run typeorm migration:generate -- -n migration_field -o
+                npm run typeorm migration:run
+                pm2 restart all
+              displayName: Build and start Restart Server in VM

@@ -1,0 +1,32 @@
+trigger:
+  - acc
+
+pool:
+  vmImage: ubuntu-latest
+
+jobs:
+  - deployment: VMDeploy
+    displayName: Deploy to VM
+    environment:
+      name: UMenuQA&ACC
+      resourceType: VirtualMachine
+      tags: UMenuBackendQA-ACC # only deploy to virtual machines with this tag
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+            - script: |
+                cd /var/www/ACC-UMenuBackend
+                ls -la
+                git checkout package-lock.json yarn.lock
+                git pull https://$(API_GIT_TOKEN)@dev.azure.com/heineken/Umenu%20-%20Tradigital/_git/Umenu%20-%20Tradigital acc
+              displayName: Pull the code in VM
+
+            - script: |
+                cd /var/www/ACC-UMenuBackend
+                npm install
+                npm run build
+                npm run typeorm migration:generate -- -n migration_field -o
+                npm run typeorm migration:run
+                pm2 restart UMenuBackendACC
+              displayName: Build and start Restart Server in VM

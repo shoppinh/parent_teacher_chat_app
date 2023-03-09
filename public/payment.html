@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>UMenu Website</title>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <title>UMenu</title>
+    <meta name="description" content="UMenu thực hiện thanh toán qua EPay.">
+
+    <!--iOS -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="/static/epay/css/main.css">
+    <style type="text/css">
+        #loader-content {
+            padding-top: 100px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loader-content">
+        <!-- Loading Content -->
+        <div id="loader-wrapper">
+            <div id="loader"></div>
+            <div class="loader-section section-left"></div>
+            <div class="loader-section section-right"></div>
+        </div>
+        <!-- /End Loading Content -->
+
+    </div>
+
+    <!-- EPay Form -->
+    <form id="megapayForm" name="megapayForm" method="POST" class="whb-main-header">
+
+    </form>
+    <!-- /End EPay Form -->
+
+    <script src="/static/js/vendor/jquery-3.6.0.min.js"></script>
+    <script src="https://sandbox.megapay.vn:2810/pg_was/js/payment/layer/paymentClient.js" async="true"></script>
+    <script>
+        $(function () {
+            EPay.construct();
+            EPay.createDynamicForm();
+            EPay.openPayment();
+        })
+
+        const EPay = {
+            paymentData: [],
+            readyToSubmit: false,
+            construct: () => {
+                setTimeout(function(){
+                    $('body').addClass('loaded');
+                }, 5000);
+
+                const p = EPay.getParameter('p');
+                if(!EPay.isEmptyObject(p)) {
+                    EPay.paymentData = JSON.parse(p);
+                }
+                console.log(EPay.paymentData);
+            },
+            getParameter: (name, url = window.location.href) => {
+                name = name.replace(/[\[\]]/g, '\\$&');
+                const regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)');
+                const results = regex.exec(url);
+                if (!results) return null;
+                if (!results[2]) return '';
+                return decodeURIComponent(results[2].replace(/\+/g, ' '));
+            },
+            createDynamicForm: () => {
+                let form = document.getElementById("megapayForm");
+                if(!EPay.isEmptyObject(EPay.paymentData)) {
+                    let index = 0;
+                    for (const [key, value] of Object.entries(EPay.paymentData)) {
+                        console.log(`${key}: ${value}`);
+                        const i = document.createElement("input");
+                        i.setAttribute('type',"hidden");
+                        i.setAttribute('name', key);
+                        i.setAttribute('value', value);
+                        form.appendChild(i);
+                        if(++index >= Object.keys(EPay.paymentData).length) {
+                            EPay.readyToSubmit = true;
+                        }
+                    }
+                }
+            },
+            openPayment: () => {
+                const domain = EPay.paymentData.reqDomain;
+                let countStop = 0;
+                const myVar = setInterval(() => {
+                    if(++countStop > 30) {
+                        clearInterval(myVar)
+                    }
+                    if(EPay.readyToSubmit) {
+                        openPayment(1, domain);
+                        clearInterval(myVar);
+                    }
+                }, 1000);
+            },
+            isEmptyObject(objects) {
+                if (!objects) {
+                    return true;
+                }
+                return !Object.keys(objects).length;
+            }
+        }
+    </script>
+
+</body>
+</html>

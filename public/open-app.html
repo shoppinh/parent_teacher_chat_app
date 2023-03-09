@@ -1,0 +1,41 @@
+<html>
+<head>
+<script type="text/javascript">
+var getParameterByName = function(name, url = window.location.href) {
+    name = name.replace(/[\[\]]/g, '\\$&');
+    var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
+        results = regex.exec(url);
+    if (!results) return null;
+    if (!results[2]) return '';
+    return decodeURIComponent(results[2].replace(/\+/g, ' '));
+}
+var getAppStoreLink = function() {
+    var userAgent = navigator.userAgent || navigator.vendor || window.opera;
+    // Windows Phone must come first because its UA also contains "Android"
+    if (/windows phone/i.test(userAgent)) {
+        return "https://www.microsoft.com/en-us/store/apps/windows-phone";
+    }
+    if (/android/i.test(userAgent)) {
+        return "https://play.google.com/store/apps/details?id=com.heineken.dotb2b&hl=en&gl=US";
+    }
+    // iOS detection from: http://stackoverflow.com/a/9039885/177710
+    if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
+        return "https://apps.apple.com/us/app/heineken-b2b-dot/id1545367760";
+    }
+    return "https://apps.apple.com/us/app/heineken-b2b-dot/id1545367760";
+}
+var fallbackToStore = function() {
+  window.location.replace(getAppStoreLink());
+};
+var openApp = function() {
+  window.location.replace('umenu:/' + getParameterByName('at'));
+};
+var triggerAppOpen = function() {
+  openApp();
+  setTimeout(fallbackToStore, 2000);
+};
+</script>
+</head>
+<body onload="triggerAppOpen()">
+</body>
+</html>

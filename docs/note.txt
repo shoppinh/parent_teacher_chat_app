@@ -1,0 +1,30 @@
+https://github.com/sagunkho/geo-sql-database
+https://github.com/typeorm/typeorm/blob/master/docs/using-cli.md#installing-cli
+https://github.com/typeorm/typeorm/blob/master/docs/migrations.md
+
+- import "hnk-umenus.backup" to pgAdmin
+- edit .env (copy from .env.example)
+- npm run build
+- npm run start:dev
+
+
+Username : VANN04@heiway.net (for office365)
+Password : Tokyo@20192020
+
+
+
+https://rdweb.wvd.microsoft.com/arm/webclient/index.html
+Microsoft Remote Desktop
+
+
+
+145.47.86.167
+
+
+
+10.19.33.156
+
+
+
+username for remote desktop ADMVANN04
+Tokyo@20162017201820192020
