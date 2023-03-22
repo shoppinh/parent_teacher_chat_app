@@ -114,6 +114,9 @@ export class MessageService extends BaseService<MessageEntity> {
       .createQueryBuilder('messages')
       .select([
         'users."userName" AS "userName"',
+        'users."fullName" AS "fullName"',
+        'users.firstName AS "firstName"',
+        'users.lastName AS "lastName"',
         'users."mobilePhone" AS "mobilePhone"',
         'users."roleId" AS "roleId"',
         'messages.*',

@@ -4,6 +4,7 @@ import { BaseService } from 'src/shared/base.service';
 import { Repository } from 'typeorm';
 import { UserEntity } from '../entity/user.entity';
 import { UMenuService } from '../../umenu/service/umenu.service';
+import { mapStringRoleToNumber } from 'src/shared/util';
 
 @Injectable()
 export class UserService extends BaseService<UserEntity> {
@@ -51,6 +52,28 @@ export class UserService extends BaseService<UserEntity> {
       userOutlet.email = userUMenu.outletUser.email;
       results.userOutlet = await this.save(userOutlet);
     }
+    return results;
+  }
+
+  async saveUserFromPartei(userPartei): Promise<any> {
+    let user = await this.findOne({
+      mobilePhone: userPartei.mobilePhone,
+      roleId: mapStringRoleToNumber(userPartei.role),
+    });
+    if (!user) {
+      user = new UserEntity();
+    }
+    user.mobilePhone = userPartei.mobilePhone;
+    user.roleId = mapStringRoleToNumber(userPartei.role);
+    user.userName = userPartei.username;
+    user.firstName = userPartei.firstname;
+    user.lastName = userPartei.lastname;
+    user.email = userPartei.email;
+    user.userUniqueId = userPartei._id;
+    user.lastLogin = userPartei.lastLoggedIn;
+
+    const results = await this.save(user);
+
     return results;
   }
 
