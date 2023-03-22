@@ -66,6 +66,7 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect, 
   async afterInit(socket: Socket, ...args: any[]) {
     try {
       await this.umenuService.login();
+      await this.umenuService.syncUser();
     } catch (e) {
       printLog(e);
     }

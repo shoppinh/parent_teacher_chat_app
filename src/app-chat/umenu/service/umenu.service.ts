@@ -1,26 +1,33 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { ApiClientService } from './api.client.service';
-import { RedisService } from '../../redis/redis.service';
-import { RedisUMenuToken } from '../../redis/redisType';
-import { RoleIdType } from '../../../shared/constant/role.constant';
+import { forwardRef, HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
+import { UserService } from 'src/app-chat/user/service/user.service';
 import { EXPIRED_TOKEN } from '../../../shared/constant/message.constant';
-import { UMenuUserType } from '../../user/type';
-import { printLog } from '../../../shared/util';
+import { RoleIdType } from '../../../shared/constant/role.constant';
 import {
+  PARTEI_API_SETTINGS,
   UMENU_API_CONSUMER,
   UMENU_API_CONSUMER_REFRESH_TOKEN,
   UMENU_API_NOTIFICATION_UNREAD,
   UMENU_API_PUSH_NOTIFICATION_TO_USER,
   UMENU_API_USER,
   UMENU_API_USER_LOGIN,
-  UMENU_API_USER_REFRESH_TOKEN,
+  UMENU_API_USER_REFRESH_TOKEN
 } from '../../../shared/constant/umenu.constant';
+import { printLog } from '../../../shared/util';
+import { RedisService } from '../../redis/redis.service';
+import { RedisUMenuToken } from '../../redis/redisType';
+import { UMenuUserType } from '../../user/type';
+import { ApiClientService } from './api.client.service';
 
 @Injectable()
 export class UMenuService {
   private refreshTokenCount = 0;
 
-  constructor(private readonly _apiService: ApiClientService, private readonly _redisService: RedisService) {}
+  constructor(
+    private readonly _apiService: ApiClientService,
+    private readonly _redisService: RedisService,
+    @Inject(forwardRef(() => UserService))
+    private readonly _userService: UserService,
+  ) {}
 
   async getUMenuLoginToken(): Promise<any> {
     const tokens = await this._redisService.getUMenuLoginToken();
@@ -146,5 +153,26 @@ export class UMenuService {
       });
       return response;
     } catch (e) {}
+  }
+
+  async syncUser(): Promise<any> {
+    try {
+      const response = await this._apiService.get(PARTEI_API_SETTINGS);
+
+      const data = await this.parseUMenuResponse(response, async (response) => {
+        //---
+      });
+      if (data?.userList) {
+        for (const user of data.userList) {
+          await this._userService.saveUserFromPartei(user);
+        }
+      }
+
+      // return await this.parseUMenuResponse(response, async (response) => {
+      //   //---
+      // });
+    } catch (e) {
+      printLog('syncUser', e);
+    }
   }
 }
