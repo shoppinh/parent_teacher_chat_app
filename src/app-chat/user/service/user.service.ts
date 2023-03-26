@@ -68,6 +68,7 @@ export class UserService extends BaseService<UserEntity> {
     user.userName = userPartei.username;
     user.firstName = userPartei.firstname;
     user.lastName = userPartei.lastname;
+    user.fullName = userPartei.fullname;
     user.email = userPartei.email;
     user.userUniqueId = userPartei._id;
     user.lastLogin = userPartei.lastLoggedIn;
