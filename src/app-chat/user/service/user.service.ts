@@ -18,7 +18,7 @@ export class UserService extends BaseService<UserEntity> {
   }
 
   async saveUserFromUMenu(userUMenu): Promise<any> {
-    let results = {
+    const results = {
       user: null,
       userOutlet: null,
     };
@@ -72,6 +72,7 @@ export class UserService extends BaseService<UserEntity> {
     user.email = userPartei.email;
     user.userUniqueId = userPartei._id;
     user.lastLogin = userPartei.lastLoggedIn;
+    user.avatar = userPartei.avatar;
 
     const results = await this.save(user);
 

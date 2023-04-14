@@ -40,4 +40,7 @@ export class UserEntity extends BaseEntity {
 
   @Column({ nullable: true })
   lastLogin: Date;
+
+  @Column({ nullable: true })
+  avatar: string;
 }

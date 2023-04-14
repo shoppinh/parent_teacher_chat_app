@@ -146,6 +146,7 @@ export class JoinedRoomService extends BaseService<JoinedRoomEntity> {
         'users.userUniqueId AS "fromUserUniqueId"',
         'users2.userName AS "toUserName"',
         'users2.fullName AS "toFullName"',
+        'users2.avatar AS "toAvatar"',
         'users2.mobilePhone AS "toMobilePhone"',
         'users2.roleId AS "toRoleId"',
         'users2.userUniqueId AS "toUserUniqueId"',
